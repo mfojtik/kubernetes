@@ -97,15 +97,28 @@ func (s ConfigSourceFile) Run() {
 func fileWatcher(s *ConfigSourceFile, w *fsnotify.Watcher) {
 	select {
 	case ev := <-w.Events:
-		if ev.Name == filepath.Clean(s.filename) &&
-			(ev.Op&fsnotify.Write == fsnotify.Write ||
-				ev.Op&fsnotify.Create == fsnotify.Create) {
+		if ev.Name != filepath.Clean(s.filename) {
+			return
+		}
+		if ev.Op&fsnotify.Write == fsnotify.Write ||
+			ev.Op&fsnotify.Create == fsnotify.Create {
 			glog.Infof("Updating configuration for %s", s.filename)
 			s.updateConfig()
+		}
+
+		if ev.Op&fsnotify.Remove == fsnotify.Remove {
+			s.unloadConfig()
 		}
 	case err := <-w.Errors:
 		glog.Infof("Config file watcher for %s failed: %v", s.filename, err)
 	}
+}
+
+func (s ConfigSourceFile) unloadConfig() {
+	emptyServices := make([]api.Service, 0)
+	emptyEndpoints := make([]api.Endpoints, 0)
+	s.serviceChannel <- ServiceUpdate{Op: SET, Services: emptyServices}
+	s.endpointsChannel <- EndpointsUpdate{Op: SET, Endpoints: emptyEndpoints}
 }
 
 func (s ConfigSourceFile) updateConfig() {
