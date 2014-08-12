@@ -31,6 +31,7 @@ import (
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/registry/minion"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/registry/pod"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/registry/service"
+	"github.com/GoogleCloudPlatform/kubernetes/pkg/template"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/util"
 
 	goetcd "github.com/coreos/go-etcd/etcd"
@@ -119,6 +120,7 @@ func (m *Master) init(cloud cloudprovider.Interface, podInfoGetter client.PodInf
 		"replicationControllers": controller.NewRegistryStorage(m.controllerRegistry, m.podRegistry),
 		"services":               service.NewRegistryStorage(m.serviceRegistry, cloud, m.minionRegistry),
 		"minions":                minion.NewRegistryStorage(m.minionRegistry),
+		"templateConfigs":        template.NewRegistryStorage(),
 
 		// TODO: should appear only in scheduler API group.
 		"bindings": binding.NewBindingStorage(m.bindingRegistry),
