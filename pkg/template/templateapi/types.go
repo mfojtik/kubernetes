@@ -38,18 +38,12 @@ type Config struct {
 	// DeploymentConfigs []deployapi.DeploymentConfig `json:"deploymentConfigs" yaml:"deploymentConfigs"`
 }
 
-type ParameterList struct {
-	api.JSONBase `json:",inline" yaml:",inline"`
-	Items        []Parameter `json:"items,omitempty" yaml:"items,omitempty"`
-}
-
 type Parameter struct {
-	api.JSONBase `json:",inline" yaml:",inline"`
-	Name         string `json:"name" yaml:"name"`
-	Description  string `json:"description" yaml:"description"`
-	Type         string `json:"type" yaml:"type"`
-	Generate     string `json:"generate,omitempty" yaml:"generate,omitempty"`
-	Value        string `json:"value,omitempty" yaml:"value,omitempty"`
+	Name        string `json:"name" yaml:"name"`
+	Description string `json:"description" yaml:"description"`
+	Type        string `json:"type" yaml:"type"`
+	Generate    string `json:"generate,omitempty" yaml:"generate,omitempty"`
+	Value       string `json:"value,omitempty" yaml:"value,omitempty"`
 }
 
 func init() {
