@@ -65,12 +65,21 @@ func (s *TemplateConfigStorage) Create(obj interface{}) (<-chan interface{}, err
 		return nil, fmt.Errorf("ID should not be empty: %#v", t)
 	}
 
-	t.CreationTimestamp = util.Now()
-
-	GenerateParameterValues(t, rand.New(rand.NewSource(time.Now().UnixNano())))
-	ProcessEnvParameters(t)
-
 	return apiserver.MakeAsync(func() (interface{}, error) {
-		return t, nil
+		GenerateParameterValues(t, rand.New(rand.NewSource(time.Now().UnixNano())))
+		err := ProcessEnvParameters(t)
+		return s.toApiConfig(*t), err
 	}), nil
+}
+
+func (s *TemplateConfigStorage) toApiConfig(t templateapi.TemplateConfig) templateapi.Config {
+	config := templateapi.Config{
+		Name:        t.Name,
+		Description: t.Description,
+		Services:    t.Services,
+		Pods:        t.Pods,
+		ReplicationControllers: t.ReplicationControllers,
+	}
+	config.CreationTimestamp = util.Now()
+	return config
 }

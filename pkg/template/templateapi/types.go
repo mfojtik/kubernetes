@@ -21,6 +21,22 @@ import "github.com/GoogleCloudPlatform/kubernetes/pkg/api"
 type TemplateConfig struct {
 	api.JSONBase           `json:",inline" yaml:",inline"`
 	Parameters             []Parameter                 `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Name                   string                      `yaml:"name" json:"name"`
+	Description            string                      `yaml:"description" json:"description"`
+	Services               []api.Service               `json:"services,omitempty" yaml:"services,omitempty"`
+	Pods                   []api.Pod                   `json:"pods,omitempty" yaml:"pods,omitempty"`
+	ReplicationControllers []api.ReplicationController `json:"replicationControllers,omitempty" yaml:"replicationControllers,omitempty"`
+	// TODO: Add these as soon as the buildconfigapi.BuildConfig is available
+	// BuildConfigs      []buildconfigapi.BuildConfig      `json:"buildConfigs" yaml:"buildConfigs"`
+	// ImageRepositories []ImageRepository  `json:"imageRepositories" yaml:"imageRepositories"`
+	// TODO: Add this as soon as the deployapi.DeploymentConfig is available
+	// DeploymentConfigs []deployapi.DeploymentConfig `json:"deploymentConfigs" yaml:"deploymentConfigs"`
+}
+
+type Config struct {
+	api.JSONBase           `json:",inline" yaml:",inline"`
+	Name                   string                      `yaml:"name" json:"name"`
+	Description            string                      `yaml:"description" json:"description"`
 	Services               []api.Service               `json:"services,omitempty" yaml:"services,omitempty"`
 	Pods                   []api.Pod                   `json:"pods,omitempty" yaml:"pods,omitempty"`
 	ReplicationControllers []api.ReplicationController `json:"replicationControllers,omitempty" yaml:"replicationControllers,omitempty"`
@@ -49,9 +65,11 @@ type Parameter struct {
 func init() {
 	api.AddKnownTypes("",
 		TemplateConfig{},
+		Config{},
 	)
 
 	api.AddKnownTypes("v1beta1",
 		TemplateConfig{},
+		Config{},
 	)
 }
