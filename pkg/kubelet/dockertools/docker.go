@@ -82,7 +82,7 @@ func NewDockerPuller(client DockerInterface, qps float32, burst int) DockerPulle
 	cfg, err := readDockerConfigFile()
 	if err == nil {
 		cfg.addToKeyring(dp.keyring)
-	} else {
+	} else if glog.V(1) {
 		glog.Errorf("Unable to parse Docker config file: %v", err)
 	}
 
