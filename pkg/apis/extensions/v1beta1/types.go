@@ -17,6 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/resource"
 	"k8s.io/kubernetes/pkg/api/unversioned"
 	"k8s.io/kubernetes/pkg/api/v1"
@@ -225,6 +226,52 @@ type Deployment struct {
 	Status DeploymentStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
 }
 
+type LifecycleHookFailurePolicy string
+
+const (
+	// LifecycleHookFailurePolicyRetry means retry the hook until it succeeds.
+	LifecycleHookFailurePolicyRetry LifecycleHookFailurePolicy = "Retry"
+
+	// LifecycleHookFailurePolicyAbort means abort the deployment (if possible).
+	LifecycleHookFailurePolicyAbort LifecycleHookFailurePolicy = "Abort"
+
+	// LifecycleHookFailurePolicyIgnore means ignore failure and continue the deployment.
+	LifecycleHookFailurePolicyIgnore LifecycleHookFailurePolicy = "Ignore"
+)
+
+// ExecNewPodHook is a hook implementation which runs a command in a new pod
+// based on the specified container which is assumed to be part of the
+// deployment template.
+type ExecNewPodHook struct {
+	// Command specifies the ENTRYPOINT of the container image
+	Command []string `json:"command,omitempty" protobuf:"bytes,1,rep,name=command"`
+
+	// Args specifies the CMD of the container image
+	Args []string `json:"args,omitempty" protobuf:"bytes,2,rep,name=args"`
+
+	// Env is a set of environment variables to supply to the hook pod's container.
+	Env []api.EnvVar `json:"env,omitempty" protobuf:"bytes,3,rep,name=env"`
+
+	// ContainerName is the name of a container in the deployment pod template
+	// whose Docker image will be used for the hook pod's container.
+	ContainerName string `json:"containerName" protobuf:"bytes,4,opt,name=containerName"`
+
+	// Volumes is a list of named volumes from the pod template which should be
+	// copied to the hook pod. Volumes names not found in pod spec are ignored.
+	// An empty list means no volumes will be copied.
+	Volumes []string `json:"volumes,omitempty" protobuf:"bytes,5,rep,name=volumes"`
+}
+
+// LifecycleHook defines a specific deployment lifecycle action. Only one type of action
+// may be specified at any time.
+type LifecycleHook struct {
+	// FailurePolicy specifies what action to take if the hook fails.
+	FailurePolicy LifecycleHookFailurePolicy `json:"failurePolicy" protobuf:"bytes,1,opt,name=failurePolicy,casttype=LifecycleHookFailurePolicy"`
+
+	// ExecNewPod specifies the options for a lifecycle hook backed by a pod.
+	ExecNewPod *ExecNewPodHook `json:"execNewPod" protobuf:"bytes,2,opt,name=execNewPod"`
+}
+
 // DeploymentSpec is the specification of the desired behavior of the Deployment.
 type DeploymentSpec struct {
 	// Number of desired pods. This is a pointer to distinguish between explicit
@@ -291,6 +338,9 @@ type DeploymentStrategy struct {
 	// TODO: Update this to follow our convention for oneOf, whatever we decide it
 	// to be.
 	RollingUpdate *RollingUpdateDeployment `json:"rollingUpdate,omitempty" protobuf:"bytes,2,opt,name=rollingUpdate"`
+
+	// Recreate update config params.
+	RecreateUpdate *RecreateUpdateDeployment `json:"recreateUpdate,omitempty" protobuf:"bytes,3,opt,name=recreateUpdate"`
 }
 
 type DeploymentStrategyType string
@@ -302,6 +352,21 @@ const (
 	// Replace the old RCs by new one using rolling update i.e gradually scale down the old RCs and scale up the new one.
 	RollingUpdateDeploymentStrategyType DeploymentStrategyType = "RollingUpdate"
 )
+
+// Spec to control the desired behavior of recreate update.
+type RecreateUpdateDeployment struct {
+	// Pre is a lifecycle hook which is executed before the strategy manipulates
+	// the deployment. All LifecycleHookFailurePolicy values are supported.
+	Pre *LifecycleHook `json:"pre,omitempty" protobuf:"bytes,1,opt,name=pre"`
+
+	// Mid is a lifecycle hook which is executed while the deployment is scaled down to zero before the first new
+	// pod is created. All LifecycleHookFailurePolicy values are supported.
+	Mid *LifecycleHook `json:"mid,omitempty" protobuf:"bytes,2,opt,name=mid"`
+
+	// Post is a lifecycle hook which is executed after the strategy has
+	// finished all deployment logic. All LifecycleHookFailurePolicy values are supported.
+	Post *LifecycleHook `json:"post,omitempty" protobuf:"bytes,3,opt,name=post"`
+}
 
 // Spec to control the desired behavior of rolling update.
 type RollingUpdateDeployment struct {

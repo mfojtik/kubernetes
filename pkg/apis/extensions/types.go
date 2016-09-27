@@ -160,6 +160,52 @@ type Deployment struct {
 	Status DeploymentStatus `json:"status,omitempty"`
 }
 
+type LifecycleHookFailurePolicy string
+
+const (
+	// LifecycleHookFailurePolicyRetry means retry the hook until it succeeds.
+	LifecycleHookFailurePolicyRetry LifecycleHookFailurePolicy = "Retry"
+
+	// LifecycleHookFailurePolicyAbort means abort the deployment (if possible).
+	LifecycleHookFailurePolicyAbort LifecycleHookFailurePolicy = "Abort"
+
+	// LifecycleHookFailurePolicyIgnore means ignore failure and continue the deployment.
+	LifecycleHookFailurePolicyIgnore LifecycleHookFailurePolicy = "Ignore"
+)
+
+// ExecNewPodHook is a hook implementation which runs a command in a new pod
+// based on the specified container which is assumed to be part of the
+// deployment template.
+type ExecNewPodHook struct {
+	// Command specifies the ENTRYPOINT of the container image
+	Command []string `json:"command,omitempty"`
+
+	// Args specifies the CMD of the container image
+	Args []string `json:"args,omitempty"`
+
+	// Env is a set of environment variables to supply to the hook pod's container.
+	Env []api.EnvVar `json:"env,omitempty"`
+
+	// ContainerName is the name of a container in the deployment pod template
+	// whose Docker image will be used for the hook pod's container.
+	ContainerName string `json:"containerName"`
+
+	// Volumes is a list of named volumes from the pod template which should be
+	// copied to the hook pod. Volumes names not found in pod spec are ignored.
+	// An empty list means no volumes will be copied.
+	Volumes []string `json:"volumes,omitempty"`
+}
+
+// LifecycleHook defines a specific deployment lifecycle action. Only one type of action
+// may be specified at any time.
+type LifecycleHook struct {
+	// FailurePolicy specifies what action to take if the hook fails.
+	FailurePolicy LifecycleHookFailurePolicy `json:"failurePolicy"`
+
+	// ExecNewPod specifies the options for a lifecycle hook backed by a pod.
+	ExecNewPod *ExecNewPodHook `json:"execNewPod"`
+}
+
 type DeploymentSpec struct {
 	// Number of desired pods. This is a pointer to distinguish between explicit
 	// zero and not specified. Defaults to 1.
@@ -224,6 +270,9 @@ type DeploymentStrategy struct {
 	// TODO: Update this to follow our convention for oneOf, whatever we decide it
 	// to be.
 	RollingUpdate *RollingUpdateDeployment `json:"rollingUpdate,omitempty"`
+
+	// Recreate update config params.
+	RecreateUpdate *RecreateUpdateDeployment `json:"recreateUpdate,omitempty"`
 }
 
 type DeploymentStrategyType string
@@ -235,6 +284,21 @@ const (
 	// Replace the old RCs by new one using rolling update i.e gradually scale down the old RCs and scale up the new one.
 	RollingUpdateDeploymentStrategyType DeploymentStrategyType = "RollingUpdate"
 )
+
+// Spec to control the desired behavior of recreate update.
+type RecreateUpdateDeployment struct {
+	// Pre is a lifecycle hook which is executed before the strategy manipulates
+	// the deployment. All LifecycleHookFailurePolicy values are supported.
+	Pre *LifecycleHook `json:"pre,omitempty"`
+
+	// Mid is a lifecycle hook which is executed while the deployment is scaled down to zero before the first new
+	// pod is created. All LifecycleHookFailurePolicy values are supported.
+	Mid *LifecycleHook `json:"mid,omitempty"`
+
+	// Post is a lifecycle hook which is executed after the strategy has
+	// finished all deployment logic. All LifecycleHookFailurePolicy values are supported.
+	Post *LifecycleHook `json:"post,omitempty"`
+}
 
 // Spec to control the desired behavior of rolling update.
 type RollingUpdateDeployment struct {
@@ -261,6 +325,15 @@ type RollingUpdateDeployment struct {
 	// new RC can be scaled up further, ensuring that total number of pods running
 	// at any time during the update is atmost 130% of original pods.
 	MaxSurge intstr.IntOrString `json:"maxSurge,omitempty"`
+
+	// Pre is a lifecycle hook which is executed before the deployment process
+	// begins. All LifecycleHookFailurePolicy values are supported.
+	Pre *LifecycleHook `json:"pre,omitempty"`
+
+	// Post is a lifecycle hook which is executed after the strategy has
+	// finished all deployment logic. The LifecycleHookFailurePolicyAbort policy
+	// is NOT supported.
+	Post *LifecycleHook `json:"post,omitempty"`
 }
 
 type DeploymentStatus struct {

@@ -190,6 +190,48 @@ func IsNotMoreThan100Percent(intOrStringValue intstr.IntOrString, fldPath *field
 	return allErrs
 }
 
+func ValidateExecNewPod(hook *extensions.ExecNewPodHook, podSpec api.PodSpec, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	for _, hookVolume := range hook.Volumes {
+		hasVolume := false
+		for _, podVolume := range podSpec.Volumes {
+			if hookVolume == podVolume.Name {
+				hasVolume = true
+				break
+			}
+		}
+		if !hasVolume {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("volumes", hookVolume, "volume is not defined for the pod"))...)
+		}
+	}
+	hasContainer := false
+	for _, c := range podSpec.Containers {
+		if c.Name == hook.ContainerName {
+			hasContainer = true
+		}
+	}
+	if !hasContainer {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("containerName", hook.ContainerName, "specified container not found in pod"))...)
+	}
+	allErrs = append(allErrrs, apivalidation.ValidateEnv(hook.Env, fldPath.Child("env")))
+
+	return allErrs
+}
+
+func ValidateLifecycleHook(hook *extensions.LifecycleHook, podSpec api.PodSpec, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if hook == nil {
+		return allErrs
+	}
+	switch hook.FailurePolicy {
+	case extensions.LifecycleHookFailurePolicyAbort, extensions.LifecycleHookFailurePolicyIgnore, extensions.LifecycleHookFailurePolicyRetry:
+	default:
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("failurePolicy", hook.FailurePolicy, "must be one of Abort, Retry or Ignore"))...)
+	}
+	allErrs = append(allErrrs, ValidateExecNewPod(hook.ExecNewPod, podSpec, fldPath.Child("execNewPod")))
+	return allErrs
+}
+
 func ValidateRollingUpdateDeployment(rollingUpdate *extensions.RollingUpdateDeployment, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	allErrs = append(allErrs, ValidatePositiveIntOrPercent(rollingUpdate.MaxUnavailable, fldPath.Child("maxUnavailable"))...)
@@ -243,6 +285,17 @@ func ValidateDeploymentSpec(spec *extensions.DeploymentSpec, fldPath *field.Path
 		if len(spec.Selector.MatchLabels)+len(spec.Selector.MatchExpressions) == 0 {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("selector"), spec.Selector, "empty selector is not valid for deployment."))
 		}
+	}
+
+	if spec.Strategy.RollingUpdate != nil {
+		allErrs = append(allErrs, ValidateLifecycleHook(spec.Strategy.RollingUpdate.Pre, spec.Template.Spec, fldPath.Child("strategy").Child("rollingUpdate").Child("pre"))...)
+		allErrs = append(allErrs, ValidateLifecycleHook(spec.Strategy.RollingUpdate.Post, spec.Template.Spec, fldPath.Child("strategy").Child("rollingUpdate").Child("post"))...)
+	}
+
+	if spec.Strategy.RecreateUpdate != nil {
+		allErrs = append(allErrs, ValidateLifecycleHook(spec.Strategy.RecreateUpdate.Pre, spec.Template.Spec, fldPath.Child("strategy").Child("recreateUpdate").Child("pre"))...)
+		allErrs = append(allErrs, ValidateLifecycleHook(spec.Strategy.RecreateUpdate.Mid, spec.Template.Spec, fldPath.Child("strategy").Child("recreateUpdate").Child("mid"))...)
+		allErrs = append(allErrs, ValidateLifecycleHook(spec.Strategy.RecreateUpdate.Post, spec.Template.Spec, fldPath.Child("strategy").Child("recreateUpdate").Child("post"))...)
 	}
 
 	selector, err := unversioned.LabelSelectorAsSelector(spec.Selector)
