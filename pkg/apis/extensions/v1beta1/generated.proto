@@ -224,6 +224,32 @@ message DeploymentStrategy {
   // TODO: Update this to follow our convention for oneOf, whatever we decide it
   // to be.
   optional RollingUpdateDeployment rollingUpdate = 2;
+
+  // Recreate update config params.
+  optional RecreateUpdateDeployment recreateUpdate = 3;
+}
+
+// ExecNewPodHook is a hook implementation which runs a command in a new pod
+// based on the specified container which is assumed to be part of the
+// deployment template.
+message ExecNewPodHook {
+  // Command specifies the ENTRYPOINT of the container image
+  repeated string command = 1;
+
+  // Args specifies the CMD of the container image
+  repeated string args = 2;
+
+  // Env is a set of environment variables to supply to the hook pod's container.
+  repeated EnvVar env = 3;
+
+  // ContainerName is the name of a container in the deployment pod template
+  // whose Docker image will be used for the hook pod's container.
+  optional string containerName = 4;
+
+  // Volumes is a list of named volumes from the pod template which should be
+  // copied to the hook pod. Volumes names not found in pod spec are ignored.
+  // An empty list means no volumes will be copied.
+  repeated string volumes = 5;
 }
 
 // ExportOptions is the query options to the standard REST get call.
@@ -603,6 +629,16 @@ message LabelSelectorRequirement {
   repeated string values = 3;
 }
 
+// LifecycleHook defines a specific deployment lifecycle action. Only one type of action
+// may be specified at any time.
+message LifecycleHook {
+  // FailurePolicy specifies what action to take if the hook fails.
+  optional string failurePolicy = 1;
+
+  // ExecNewPod specifies the options for a lifecycle hook backed by a pod.
+  optional ExecNewPodHook execNewPod = 2;
+}
+
 // ListOptions is the query options to a standard REST list call.
 message ListOptions {
   // A selector to restrict the list of returned objects by their labels.
@@ -786,6 +822,21 @@ message PodSecurityPolicySpec {
   // If set to false the container may run with a read only root file system if it wishes but it
   // will not be forced to.
   optional bool readOnlyRootFilesystem = 14;
+}
+
+// Spec to control the desired behavior of recreate update.
+message RecreateUpdateDeployment {
+  // Pre is a lifecycle hook which is executed before the strategy manipulates
+  // the deployment. All LifecycleHookFailurePolicy values are supported.
+  optional LifecycleHook pre = 1;
+
+  // Mid is a lifecycle hook which is executed while the deployment is scaled down to zero before the first new
+  // pod is created. All LifecycleHookFailurePolicy values are supported.
+  optional LifecycleHook mid = 2;
+
+  // Post is a lifecycle hook which is executed after the strategy has
+  // finished all deployment logic. All LifecycleHookFailurePolicy values are supported.
+  optional LifecycleHook post = 3;
 }
 
 // ReplicaSet represents the configuration of a ReplicaSet.
@@ -1009,5 +1060,81 @@ message ThirdPartyResourceList {
 
   // Items is the list of ThirdPartyResources.
   repeated ThirdPartyResource items = 2;
+}
+
+message ConfigMapKeySelector {
+  // The ConfigMap to select from.
+  optional LocalObjectReference localObjectReference = 1;
+
+  // The key to select.
+  optional string key = 2;
+}
+
+message EnvVar {
+  // Required: This must be a C_IDENTIFIER.
+  optional string name = 1;
+
+  // Optional: no more than one of the following may be specified.
+  // Optional: Defaults to ""; variable references $(VAR_NAME) are expanded
+  // using the previous defined environment variables in the container and
+  // any service environment variables.  If a variable cannot be resolved,
+  // the reference in the input string will be unchanged.  The $(VAR_NAME)
+  // syntax can be escaped with a double $$, ie: $$(VAR_NAME).  Escaped
+  // references will never be expanded, regardless of whether the variable
+  // exists or not.
+  optional string value = 2;
+
+  // Optional: Specifies a source the value of this var should come from.
+  optional EnvVarSource valueFrom = 3;
+}
+
+message EnvVarSource {
+  // Selects a field of the pod: supports metadata.name, metadata.namespace, metadata.labels, metadata.annotations,
+  // spec.nodeName, spec.serviceAccountName, status.podIP.
+  optional ObjectFieldSelector fieldRef = 1;
+
+  // Selects a resource of the container: only resources limits and requests
+  // (limits.cpu, limits.memory, requests.cpu and requests.memory) are currently supported.
+  optional ResourceFieldSelector resourceFieldRef = 2;
+
+  // Selects a key of a ConfigMap.
+  optional ConfigMapKeySelector configMapKeyRef = 3;
+
+  // Selects a key of a secret in the pod's namespace.
+  optional SecretKeySelector secretKeyRef = 4;
+}
+
+message LocalObjectReference {
+  // TODO: Add other useful fields.  apiVersion, kind, uid?
+  optional string name = 1;
+}
+
+message ObjectFieldSelector {
+  // Required: Version of the schema the FieldPath is written in terms of.
+  // If no value is specified, it will be defaulted to the APIVersion of the
+  // enclosing object.
+  optional string apiVersion = 1;
+
+  // Required: Path of the field to select in the specified API version
+  optional string fieldPath = 2;
+}
+
+message ResourceFieldSelector {
+  // Container name: required for volumes, optional for env vars
+  optional string containerName = 1;
+
+  // Required: resource to select
+  optional string resource = 2;
+
+  // Specifies the output format of the exposed resources, defaults to "1"
+  optional k8s.io.kubernetes.pkg.api.resource.Quantity divisor = 3;
+}
+
+message SecretKeySelector {
+  // The name of the secret in the pod's namespace to select from.
+  optional LocalObjectReference localObjectReference = 1;
+
+  // The key of the secret to select from.  Must be a valid secret key.
+  optional string key = 2;
 }
 

@@ -69,6 +69,8 @@ func RegisterConversions(scheme *runtime.Scheme) error {
 		Convert_extensions_DeploymentStatus_To_v1beta1_DeploymentStatus,
 		Convert_v1beta1_DeploymentStrategy_To_extensions_DeploymentStrategy,
 		Convert_extensions_DeploymentStrategy_To_v1beta1_DeploymentStrategy,
+		Convert_v1beta1_ExecNewPodHook_To_extensions_ExecNewPodHook,
+		Convert_extensions_ExecNewPodHook_To_v1beta1_ExecNewPodHook,
 		Convert_v1beta1_ExportOptions_To_api_ExportOptions,
 		Convert_api_ExportOptions_To_v1beta1_ExportOptions,
 		Convert_v1beta1_FSGroupStrategyOptions_To_extensions_FSGroupStrategyOptions,
@@ -119,6 +121,8 @@ func RegisterConversions(scheme *runtime.Scheme) error {
 		Convert_unversioned_LabelSelector_To_v1beta1_LabelSelector,
 		Convert_v1beta1_LabelSelectorRequirement_To_unversioned_LabelSelectorRequirement,
 		Convert_unversioned_LabelSelectorRequirement_To_v1beta1_LabelSelectorRequirement,
+		Convert_v1beta1_LifecycleHook_To_extensions_LifecycleHook,
+		Convert_extensions_LifecycleHook_To_v1beta1_LifecycleHook,
 		Convert_v1beta1_ListOptions_To_api_ListOptions,
 		Convert_api_ListOptions_To_v1beta1_ListOptions,
 		Convert_v1beta1_NetworkPolicy_To_extensions_NetworkPolicy,
@@ -139,6 +143,8 @@ func RegisterConversions(scheme *runtime.Scheme) error {
 		Convert_extensions_PodSecurityPolicyList_To_v1beta1_PodSecurityPolicyList,
 		Convert_v1beta1_PodSecurityPolicySpec_To_extensions_PodSecurityPolicySpec,
 		Convert_extensions_PodSecurityPolicySpec_To_v1beta1_PodSecurityPolicySpec,
+		Convert_v1beta1_RecreateUpdateDeployment_To_extensions_RecreateUpdateDeployment,
+		Convert_extensions_RecreateUpdateDeployment_To_v1beta1_RecreateUpdateDeployment,
 		Convert_v1beta1_ReplicaSet_To_extensions_ReplicaSet,
 		Convert_extensions_ReplicaSet_To_v1beta1_ReplicaSet,
 		Convert_v1beta1_ReplicaSetList_To_extensions_ReplicaSetList,
@@ -703,6 +709,15 @@ func autoConvert_v1beta1_DeploymentStrategy_To_extensions_DeploymentStrategy(in 
 	} else {
 		out.RollingUpdate = nil
 	}
+	if in.RecreateUpdate != nil {
+		in, out := &in.RecreateUpdate, &out.RecreateUpdate
+		*out = new(extensions.RecreateUpdateDeployment)
+		if err := Convert_v1beta1_RecreateUpdateDeployment_To_extensions_RecreateUpdateDeployment(*in, *out, s); err != nil {
+			return err
+		}
+	} else {
+		out.RecreateUpdate = nil
+	}
 	return nil
 }
 
@@ -717,7 +732,42 @@ func autoConvert_extensions_DeploymentStrategy_To_v1beta1_DeploymentStrategy(in 
 	} else {
 		out.RollingUpdate = nil
 	}
+	if in.RecreateUpdate != nil {
+		in, out := &in.RecreateUpdate, &out.RecreateUpdate
+		*out = new(RecreateUpdateDeployment)
+		if err := Convert_extensions_RecreateUpdateDeployment_To_v1beta1_RecreateUpdateDeployment(*in, *out, s); err != nil {
+			return err
+		}
+	} else {
+		out.RecreateUpdate = nil
+	}
 	return nil
+}
+
+func autoConvert_v1beta1_ExecNewPodHook_To_extensions_ExecNewPodHook(in *ExecNewPodHook, out *extensions.ExecNewPodHook, s conversion.Scope) error {
+	out.Command = in.Command
+	out.Args = in.Args
+	out.Env = in.Env
+	out.ContainerName = in.ContainerName
+	out.Volumes = in.Volumes
+	return nil
+}
+
+func Convert_v1beta1_ExecNewPodHook_To_extensions_ExecNewPodHook(in *ExecNewPodHook, out *extensions.ExecNewPodHook, s conversion.Scope) error {
+	return autoConvert_v1beta1_ExecNewPodHook_To_extensions_ExecNewPodHook(in, out, s)
+}
+
+func autoConvert_extensions_ExecNewPodHook_To_v1beta1_ExecNewPodHook(in *extensions.ExecNewPodHook, out *ExecNewPodHook, s conversion.Scope) error {
+	out.Command = in.Command
+	out.Args = in.Args
+	out.Env = in.Env
+	out.ContainerName = in.ContainerName
+	out.Volumes = in.Volumes
+	return nil
+}
+
+func Convert_extensions_ExecNewPodHook_To_v1beta1_ExecNewPodHook(in *extensions.ExecNewPodHook, out *ExecNewPodHook, s conversion.Scope) error {
+	return autoConvert_extensions_ExecNewPodHook_To_v1beta1_ExecNewPodHook(in, out, s)
 }
 
 func autoConvert_v1beta1_ExportOptions_To_api_ExportOptions(in *ExportOptions, out *api.ExportOptions, s conversion.Scope) error {
@@ -1542,6 +1592,42 @@ func Convert_unversioned_LabelSelectorRequirement_To_v1beta1_LabelSelectorRequir
 	return autoConvert_unversioned_LabelSelectorRequirement_To_v1beta1_LabelSelectorRequirement(in, out, s)
 }
 
+func autoConvert_v1beta1_LifecycleHook_To_extensions_LifecycleHook(in *LifecycleHook, out *extensions.LifecycleHook, s conversion.Scope) error {
+	out.FailurePolicy = extensions.LifecycleHookFailurePolicy(in.FailurePolicy)
+	if in.ExecNewPod != nil {
+		in, out := &in.ExecNewPod, &out.ExecNewPod
+		*out = new(extensions.ExecNewPodHook)
+		if err := Convert_v1beta1_ExecNewPodHook_To_extensions_ExecNewPodHook(*in, *out, s); err != nil {
+			return err
+		}
+	} else {
+		out.ExecNewPod = nil
+	}
+	return nil
+}
+
+func Convert_v1beta1_LifecycleHook_To_extensions_LifecycleHook(in *LifecycleHook, out *extensions.LifecycleHook, s conversion.Scope) error {
+	return autoConvert_v1beta1_LifecycleHook_To_extensions_LifecycleHook(in, out, s)
+}
+
+func autoConvert_extensions_LifecycleHook_To_v1beta1_LifecycleHook(in *extensions.LifecycleHook, out *LifecycleHook, s conversion.Scope) error {
+	out.FailurePolicy = LifecycleHookFailurePolicy(in.FailurePolicy)
+	if in.ExecNewPod != nil {
+		in, out := &in.ExecNewPod, &out.ExecNewPod
+		*out = new(ExecNewPodHook)
+		if err := Convert_extensions_ExecNewPodHook_To_v1beta1_ExecNewPodHook(*in, *out, s); err != nil {
+			return err
+		}
+	} else {
+		out.ExecNewPod = nil
+	}
+	return nil
+}
+
+func Convert_extensions_LifecycleHook_To_v1beta1_LifecycleHook(in *extensions.LifecycleHook, out *LifecycleHook, s conversion.Scope) error {
+	return autoConvert_extensions_LifecycleHook_To_v1beta1_LifecycleHook(in, out, s)
+}
+
 func autoConvert_v1beta1_ListOptions_To_api_ListOptions(in *ListOptions, out *api.ListOptions, s conversion.Scope) error {
 	if err := api.Convert_unversioned_TypeMeta_To_unversioned_TypeMeta(&in.TypeMeta, &out.TypeMeta, s); err != nil {
 		return err
@@ -2085,6 +2171,76 @@ func autoConvert_extensions_PodSecurityPolicySpec_To_v1beta1_PodSecurityPolicySp
 
 func Convert_extensions_PodSecurityPolicySpec_To_v1beta1_PodSecurityPolicySpec(in *extensions.PodSecurityPolicySpec, out *PodSecurityPolicySpec, s conversion.Scope) error {
 	return autoConvert_extensions_PodSecurityPolicySpec_To_v1beta1_PodSecurityPolicySpec(in, out, s)
+}
+
+func autoConvert_v1beta1_RecreateUpdateDeployment_To_extensions_RecreateUpdateDeployment(in *RecreateUpdateDeployment, out *extensions.RecreateUpdateDeployment, s conversion.Scope) error {
+	if in.Pre != nil {
+		in, out := &in.Pre, &out.Pre
+		*out = new(extensions.LifecycleHook)
+		if err := Convert_v1beta1_LifecycleHook_To_extensions_LifecycleHook(*in, *out, s); err != nil {
+			return err
+		}
+	} else {
+		out.Pre = nil
+	}
+	if in.Mid != nil {
+		in, out := &in.Mid, &out.Mid
+		*out = new(extensions.LifecycleHook)
+		if err := Convert_v1beta1_LifecycleHook_To_extensions_LifecycleHook(*in, *out, s); err != nil {
+			return err
+		}
+	} else {
+		out.Mid = nil
+	}
+	if in.Post != nil {
+		in, out := &in.Post, &out.Post
+		*out = new(extensions.LifecycleHook)
+		if err := Convert_v1beta1_LifecycleHook_To_extensions_LifecycleHook(*in, *out, s); err != nil {
+			return err
+		}
+	} else {
+		out.Post = nil
+	}
+	return nil
+}
+
+func Convert_v1beta1_RecreateUpdateDeployment_To_extensions_RecreateUpdateDeployment(in *RecreateUpdateDeployment, out *extensions.RecreateUpdateDeployment, s conversion.Scope) error {
+	return autoConvert_v1beta1_RecreateUpdateDeployment_To_extensions_RecreateUpdateDeployment(in, out, s)
+}
+
+func autoConvert_extensions_RecreateUpdateDeployment_To_v1beta1_RecreateUpdateDeployment(in *extensions.RecreateUpdateDeployment, out *RecreateUpdateDeployment, s conversion.Scope) error {
+	if in.Pre != nil {
+		in, out := &in.Pre, &out.Pre
+		*out = new(LifecycleHook)
+		if err := Convert_extensions_LifecycleHook_To_v1beta1_LifecycleHook(*in, *out, s); err != nil {
+			return err
+		}
+	} else {
+		out.Pre = nil
+	}
+	if in.Mid != nil {
+		in, out := &in.Mid, &out.Mid
+		*out = new(LifecycleHook)
+		if err := Convert_extensions_LifecycleHook_To_v1beta1_LifecycleHook(*in, *out, s); err != nil {
+			return err
+		}
+	} else {
+		out.Mid = nil
+	}
+	if in.Post != nil {
+		in, out := &in.Post, &out.Post
+		*out = new(LifecycleHook)
+		if err := Convert_extensions_LifecycleHook_To_v1beta1_LifecycleHook(*in, *out, s); err != nil {
+			return err
+		}
+	} else {
+		out.Post = nil
+	}
+	return nil
+}
+
+func Convert_extensions_RecreateUpdateDeployment_To_v1beta1_RecreateUpdateDeployment(in *extensions.RecreateUpdateDeployment, out *RecreateUpdateDeployment, s conversion.Scope) error {
+	return autoConvert_extensions_RecreateUpdateDeployment_To_v1beta1_RecreateUpdateDeployment(in, out, s)
 }
 
 func autoConvert_v1beta1_ReplicaSet_To_extensions_ReplicaSet(in *ReplicaSet, out *extensions.ReplicaSet, s conversion.Scope) error {

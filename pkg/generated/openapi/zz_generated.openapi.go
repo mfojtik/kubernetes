@@ -3493,11 +3493,91 @@ var OpenAPIDefinitions *common.OpenAPIDefinitions = &common.OpenAPIDefinitions{
 							Ref:         spec.MustCreateRef("#/definitions/extensions.RollingUpdateDeployment"),
 						},
 					},
+					"recreateUpdate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Recreate update config params.",
+							Ref:         spec.MustCreateRef("#/definitions/extensions.RecreateUpdateDeployment"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"extensions.RollingUpdateDeployment"},
+			"extensions.RecreateUpdateDeployment", "extensions.RollingUpdateDeployment"},
+	},
+	"extensions.ExecNewPodHook": {
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ExecNewPodHook is a hook implementation which runs a command in a new pod based on the specified container which is assumed to be part of the deployment template.",
+				Properties: map[string]spec.Schema{
+					"command": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Command specifies the ENTRYPOINT of the container image",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"args": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Args specifies the CMD of the container image",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"env": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Env is a set of environment variables to supply to the hook pod's container.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: spec.MustCreateRef("#/definitions/api.EnvVar"),
+									},
+								},
+							},
+						},
+					},
+					"containerName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ContainerName is the name of a container in the deployment pod template whose Docker image will be used for the hook pod's container.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"volumes": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Volumes is a list of named volumes from the pod template which should be copied to the hook pod. Volumes names not found in pod spec are ignored. An empty list means no volumes will be copied.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"containerName"},
+			},
+		},
+		Dependencies: []string{
+			"api.EnvVar"},
 	},
 	"extensions.FSGroupStrategyOptions": {
 		Schema: spec.Schema{
@@ -3838,6 +3918,31 @@ var OpenAPIDefinitions *common.OpenAPIDefinitions = &common.OpenAPIDefinitions{
 			},
 		},
 		Dependencies: []string{},
+	},
+	"extensions.LifecycleHook": {
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "LifecycleHook defines a specific deployment lifecycle action. Only one type of action may be specified at any time.",
+				Properties: map[string]spec.Schema{
+					"failurePolicy": {
+						SchemaProps: spec.SchemaProps{
+							Description: "FailurePolicy specifies what action to take if the hook fails.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"execNewPod": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ExecNewPod specifies the options for a lifecycle hook backed by a pod.",
+							Ref:         spec.MustCreateRef("#/definitions/extensions.ExecNewPodHook"),
+						},
+					},
+				},
+				Required: []string{"failurePolicy", "execNewPod"},
+			},
+		},
+		Dependencies: []string{
+			"extensions.ExecNewPodHook"},
 	},
 	"extensions.NetworkPolicy": {
 		Schema: spec.Schema{
@@ -4192,6 +4297,35 @@ var OpenAPIDefinitions *common.OpenAPIDefinitions = &common.OpenAPIDefinitions{
 		Dependencies: []string{
 			"extensions.FSGroupStrategyOptions", "extensions.HostPortRange", "extensions.RunAsUserStrategyOptions", "extensions.SELinuxStrategyOptions", "extensions.SupplementalGroupsStrategyOptions"},
 	},
+	"extensions.RecreateUpdateDeployment": {
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Spec to control the desired behavior of recreate update.",
+				Properties: map[string]spec.Schema{
+					"pre": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Pre is a lifecycle hook which is executed before the strategy manipulates the deployment. All LifecycleHookFailurePolicy values are supported.",
+							Ref:         spec.MustCreateRef("#/definitions/extensions.LifecycleHook"),
+						},
+					},
+					"mid": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Mid is a lifecycle hook which is executed while the deployment is scaled down to zero before the first new pod is created. All LifecycleHookFailurePolicy values are supported.",
+							Ref:         spec.MustCreateRef("#/definitions/extensions.LifecycleHook"),
+						},
+					},
+					"post": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Post is a lifecycle hook which is executed after the strategy has finished all deployment logic. All LifecycleHookFailurePolicy values are supported.",
+							Ref:         spec.MustCreateRef("#/definitions/extensions.LifecycleHook"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"extensions.LifecycleHook"},
+	},
 	"extensions.ReplicaSet": {
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -4361,11 +4495,23 @@ var OpenAPIDefinitions *common.OpenAPIDefinitions = &common.OpenAPIDefinitions{
 							Ref:         spec.MustCreateRef("#/definitions/intstr.IntOrString"),
 						},
 					},
+					"pre": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Pre is a lifecycle hook which is executed before the deployment process begins. All LifecycleHookFailurePolicy values are supported.",
+							Ref:         spec.MustCreateRef("#/definitions/extensions.LifecycleHook"),
+						},
+					},
+					"post": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Post is a lifecycle hook which is executed after the strategy has finished all deployment logic. The LifecycleHookFailurePolicyAbort policy is NOT supported.",
+							Ref:         spec.MustCreateRef("#/definitions/extensions.LifecycleHook"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"intstr.IntOrString"},
+			"extensions.LifecycleHook", "intstr.IntOrString"},
 	},
 	"extensions.RunAsUserStrategyOptions": {
 		Schema: spec.Schema{
@@ -15548,11 +15694,91 @@ var OpenAPIDefinitions *common.OpenAPIDefinitions = &common.OpenAPIDefinitions{
 							Ref:         spec.MustCreateRef("#/definitions/v1beta1.RollingUpdateDeployment"),
 						},
 					},
+					"recreateUpdate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Recreate update config params.",
+							Ref:         spec.MustCreateRef("#/definitions/v1beta1.RecreateUpdateDeployment"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"v1beta1.RollingUpdateDeployment"},
+			"v1beta1.RecreateUpdateDeployment", "v1beta1.RollingUpdateDeployment"},
+	},
+	"v1beta1.ExecNewPodHook": {
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ExecNewPodHook is a hook implementation which runs a command in a new pod based on the specified container which is assumed to be part of the deployment template.",
+				Properties: map[string]spec.Schema{
+					"command": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Command specifies the ENTRYPOINT of the container image",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"args": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Args specifies the CMD of the container image",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"env": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Env is a set of environment variables to supply to the hook pod's container.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: spec.MustCreateRef("#/definitions/api.EnvVar"),
+									},
+								},
+							},
+						},
+					},
+					"containerName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ContainerName is the name of a container in the deployment pod template whose Docker image will be used for the hook pod's container.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"volumes": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Volumes is a list of named volumes from the pod template which should be copied to the hook pod. Volumes names not found in pod spec are ignored. An empty list means no volumes will be copied.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"containerName"},
+			},
+		},
+		Dependencies: []string{
+			"api.EnvVar"},
 	},
 	"v1beta1.ExportOptions": {
 		Schema: spec.Schema{
@@ -16361,6 +16587,31 @@ var OpenAPIDefinitions *common.OpenAPIDefinitions = &common.OpenAPIDefinitions{
 		},
 		Dependencies: []string{},
 	},
+	"v1beta1.LifecycleHook": {
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "LifecycleHook defines a specific deployment lifecycle action. Only one type of action may be specified at any time.",
+				Properties: map[string]spec.Schema{
+					"failurePolicy": {
+						SchemaProps: spec.SchemaProps{
+							Description: "FailurePolicy specifies what action to take if the hook fails.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"execNewPod": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ExecNewPod specifies the options for a lifecycle hook backed by a pod.",
+							Ref:         spec.MustCreateRef("#/definitions/v1beta1.ExecNewPodHook"),
+						},
+					},
+				},
+				Required: []string{"failurePolicy", "execNewPod"},
+			},
+		},
+		Dependencies: []string{
+			"v1beta1.ExecNewPodHook"},
+	},
 	"v1beta1.ListOptions": {
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -16817,6 +17068,35 @@ var OpenAPIDefinitions *common.OpenAPIDefinitions = &common.OpenAPIDefinitions{
 		},
 		Dependencies: []string{
 			"v1beta1.FSGroupStrategyOptions", "v1beta1.HostPortRange", "v1beta1.RunAsUserStrategyOptions", "v1beta1.SELinuxStrategyOptions", "v1beta1.SupplementalGroupsStrategyOptions"},
+	},
+	"v1beta1.RecreateUpdateDeployment": {
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Spec to control the desired behavior of recreate update.",
+				Properties: map[string]spec.Schema{
+					"pre": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Pre is a lifecycle hook which is executed before the strategy manipulates the deployment. All LifecycleHookFailurePolicy values are supported.",
+							Ref:         spec.MustCreateRef("#/definitions/v1beta1.LifecycleHook"),
+						},
+					},
+					"mid": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Mid is a lifecycle hook which is executed while the deployment is scaled down to zero before the first new pod is created. All LifecycleHookFailurePolicy values are supported.",
+							Ref:         spec.MustCreateRef("#/definitions/v1beta1.LifecycleHook"),
+						},
+					},
+					"post": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Post is a lifecycle hook which is executed after the strategy has finished all deployment logic. All LifecycleHookFailurePolicy values are supported.",
+							Ref:         spec.MustCreateRef("#/definitions/v1beta1.LifecycleHook"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"v1beta1.LifecycleHook"},
 	},
 	"v1beta1.ReplicaSet": {
 		Schema: spec.Schema{

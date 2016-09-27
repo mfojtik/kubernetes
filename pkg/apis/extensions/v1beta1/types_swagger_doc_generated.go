@@ -167,13 +167,27 @@ func (DeploymentStatus) SwaggerDoc() map[string]string {
 }
 
 var map_DeploymentStrategy = map[string]string{
-	"":              "DeploymentStrategy describes how to replace existing pods with new ones.",
-	"type":          "Type of deployment. Can be \"Recreate\" or \"RollingUpdate\". Default is RollingUpdate.",
-	"rollingUpdate": "Rolling update config params. Present only if DeploymentStrategyType = RollingUpdate.",
+	"":               "DeploymentStrategy describes how to replace existing pods with new ones.",
+	"type":           "Type of deployment. Can be \"Recreate\" or \"RollingUpdate\". Default is RollingUpdate.",
+	"rollingUpdate":  "Rolling update config params. Present only if DeploymentStrategyType = RollingUpdate.",
+	"recreateUpdate": "Recreate update config params.",
 }
 
 func (DeploymentStrategy) SwaggerDoc() map[string]string {
 	return map_DeploymentStrategy
+}
+
+var map_ExecNewPodHook = map[string]string{
+	"":              "ExecNewPodHook is a hook implementation which runs a command in a new pod based on the specified container which is assumed to be part of the deployment template.",
+	"command":       "Command specifies the ENTRYPOINT of the container image",
+	"args":          "Args specifies the CMD of the container image",
+	"env":           "Env is a set of environment variables to supply to the hook pod's container.",
+	"containerName": "ContainerName is the name of a container in the deployment pod template whose Docker image will be used for the hook pod's container.",
+	"volumes":       "Volumes is a list of named volumes from the pod template which should be copied to the hook pod. Volumes names not found in pod spec are ignored. An empty list means no volumes will be copied.",
+}
+
+func (ExecNewPodHook) SwaggerDoc() map[string]string {
+	return map_ExecNewPodHook
 }
 
 var map_ExportOptions = map[string]string{
@@ -443,6 +457,16 @@ func (LabelSelectorRequirement) SwaggerDoc() map[string]string {
 	return map_LabelSelectorRequirement
 }
 
+var map_LifecycleHook = map[string]string{
+	"":              "LifecycleHook defines a specific deployment lifecycle action. Only one type of action may be specified at any time.",
+	"failurePolicy": "FailurePolicy specifies what action to take if the hook fails.",
+	"execNewPod":    "ExecNewPod specifies the options for a lifecycle hook backed by a pod.",
+}
+
+func (LifecycleHook) SwaggerDoc() map[string]string {
+	return map_LifecycleHook
+}
+
 var map_ListOptions = map[string]string{
 	"":                "ListOptions is the query options to a standard REST list call.",
 	"labelSelector":   "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
@@ -552,6 +576,17 @@ var map_PodSecurityPolicySpec = map[string]string{
 
 func (PodSecurityPolicySpec) SwaggerDoc() map[string]string {
 	return map_PodSecurityPolicySpec
+}
+
+var map_RecreateUpdateDeployment = map[string]string{
+	"":     "Spec to control the desired behavior of recreate update.",
+	"pre":  "Pre is a lifecycle hook which is executed before the strategy manipulates the deployment. All LifecycleHookFailurePolicy values are supported.",
+	"mid":  "Mid is a lifecycle hook which is executed while the deployment is scaled down to zero before the first new pod is created. All LifecycleHookFailurePolicy values are supported.",
+	"post": "Post is a lifecycle hook which is executed after the strategy has finished all deployment logic. All LifecycleHookFailurePolicy values are supported.",
+}
+
+func (RecreateUpdateDeployment) SwaggerDoc() map[string]string {
+	return map_RecreateUpdateDeployment
 }
 
 var map_ReplicaSet = map[string]string{

@@ -21,6 +21,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	api "k8s.io/kubernetes/pkg/api"
 	unversioned "k8s.io/kubernetes/pkg/api/unversioned"
 	v1 "k8s.io/kubernetes/pkg/api/v1"
 	conversion "k8s.io/kubernetes/pkg/conversion"
@@ -53,6 +54,7 @@ func RegisterDeepCopies(scheme *runtime.Scheme) error {
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_v1beta1_DeploymentSpec, InType: reflect.TypeOf(&DeploymentSpec{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_v1beta1_DeploymentStatus, InType: reflect.TypeOf(&DeploymentStatus{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_v1beta1_DeploymentStrategy, InType: reflect.TypeOf(&DeploymentStrategy{})},
+		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_v1beta1_ExecNewPodHook, InType: reflect.TypeOf(&ExecNewPodHook{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_v1beta1_ExportOptions, InType: reflect.TypeOf(&ExportOptions{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_v1beta1_FSGroupStrategyOptions, InType: reflect.TypeOf(&FSGroupStrategyOptions{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_v1beta1_HTTPIngressPath, InType: reflect.TypeOf(&HTTPIngressPath{})},
@@ -78,6 +80,7 @@ func RegisterDeepCopies(scheme *runtime.Scheme) error {
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_v1beta1_JobStatus, InType: reflect.TypeOf(&JobStatus{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_v1beta1_LabelSelector, InType: reflect.TypeOf(&LabelSelector{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_v1beta1_LabelSelectorRequirement, InType: reflect.TypeOf(&LabelSelectorRequirement{})},
+		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_v1beta1_LifecycleHook, InType: reflect.TypeOf(&LifecycleHook{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_v1beta1_ListOptions, InType: reflect.TypeOf(&ListOptions{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_v1beta1_NetworkPolicy, InType: reflect.TypeOf(&NetworkPolicy{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_v1beta1_NetworkPolicyIngressRule, InType: reflect.TypeOf(&NetworkPolicyIngressRule{})},
@@ -88,6 +91,7 @@ func RegisterDeepCopies(scheme *runtime.Scheme) error {
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_v1beta1_PodSecurityPolicy, InType: reflect.TypeOf(&PodSecurityPolicy{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_v1beta1_PodSecurityPolicyList, InType: reflect.TypeOf(&PodSecurityPolicyList{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_v1beta1_PodSecurityPolicySpec, InType: reflect.TypeOf(&PodSecurityPolicySpec{})},
+		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_v1beta1_RecreateUpdateDeployment, InType: reflect.TypeOf(&RecreateUpdateDeployment{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_v1beta1_ReplicaSet, InType: reflect.TypeOf(&ReplicaSet{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_v1beta1_ReplicaSetList, InType: reflect.TypeOf(&ReplicaSetList{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_v1beta1_ReplicaSetSpec, InType: reflect.TypeOf(&ReplicaSetSpec{})},
@@ -382,6 +386,56 @@ func DeepCopy_v1beta1_DeploymentStrategy(in interface{}, out interface{}, c *con
 			}
 		} else {
 			out.RollingUpdate = nil
+		}
+		if in.RecreateUpdate != nil {
+			in, out := &in.RecreateUpdate, &out.RecreateUpdate
+			*out = new(RecreateUpdateDeployment)
+			if err := DeepCopy_v1beta1_RecreateUpdateDeployment(*in, *out, c); err != nil {
+				return err
+			}
+		} else {
+			out.RecreateUpdate = nil
+		}
+		return nil
+	}
+}
+
+func DeepCopy_v1beta1_ExecNewPodHook(in interface{}, out interface{}, c *conversion.Cloner) error {
+	{
+		in := in.(*ExecNewPodHook)
+		out := out.(*ExecNewPodHook)
+		if in.Command != nil {
+			in, out := &in.Command, &out.Command
+			*out = make([]string, len(*in))
+			copy(*out, *in)
+		} else {
+			out.Command = nil
+		}
+		if in.Args != nil {
+			in, out := &in.Args, &out.Args
+			*out = make([]string, len(*in))
+			copy(*out, *in)
+		} else {
+			out.Args = nil
+		}
+		if in.Env != nil {
+			in, out := &in.Env, &out.Env
+			*out = make([]api.EnvVar, len(*in))
+			for i := range *in {
+				if err := api.DeepCopy_api_EnvVar(&(*in)[i], &(*out)[i], c); err != nil {
+					return err
+				}
+			}
+		} else {
+			out.Env = nil
+		}
+		out.ContainerName = in.ContainerName
+		if in.Volumes != nil {
+			in, out := &in.Volumes, &out.Volumes
+			*out = make([]string, len(*in))
+			copy(*out, *in)
+		} else {
+			out.Volumes = nil
 		}
 		return nil
 	}
@@ -881,6 +935,24 @@ func DeepCopy_v1beta1_LabelSelectorRequirement(in interface{}, out interface{}, 
 	}
 }
 
+func DeepCopy_v1beta1_LifecycleHook(in interface{}, out interface{}, c *conversion.Cloner) error {
+	{
+		in := in.(*LifecycleHook)
+		out := out.(*LifecycleHook)
+		out.FailurePolicy = in.FailurePolicy
+		if in.ExecNewPod != nil {
+			in, out := &in.ExecNewPod, &out.ExecNewPod
+			*out = new(ExecNewPodHook)
+			if err := DeepCopy_v1beta1_ExecNewPodHook(*in, *out, c); err != nil {
+				return err
+			}
+		} else {
+			out.ExecNewPod = nil
+		}
+		return nil
+	}
+}
+
 func DeepCopy_v1beta1_ListOptions(in interface{}, out interface{}, c *conversion.Cloner) error {
 	{
 		in := in.(*ListOptions)
@@ -1139,6 +1211,41 @@ func DeepCopy_v1beta1_PodSecurityPolicySpec(in interface{}, out interface{}, c *
 			return err
 		}
 		out.ReadOnlyRootFilesystem = in.ReadOnlyRootFilesystem
+		return nil
+	}
+}
+
+func DeepCopy_v1beta1_RecreateUpdateDeployment(in interface{}, out interface{}, c *conversion.Cloner) error {
+	{
+		in := in.(*RecreateUpdateDeployment)
+		out := out.(*RecreateUpdateDeployment)
+		if in.Pre != nil {
+			in, out := &in.Pre, &out.Pre
+			*out = new(LifecycleHook)
+			if err := DeepCopy_v1beta1_LifecycleHook(*in, *out, c); err != nil {
+				return err
+			}
+		} else {
+			out.Pre = nil
+		}
+		if in.Mid != nil {
+			in, out := &in.Mid, &out.Mid
+			*out = new(LifecycleHook)
+			if err := DeepCopy_v1beta1_LifecycleHook(*in, *out, c); err != nil {
+				return err
+			}
+		} else {
+			out.Mid = nil
+		}
+		if in.Post != nil {
+			in, out := &in.Post, &out.Post
+			*out = new(LifecycleHook)
+			if err := DeepCopy_v1beta1_LifecycleHook(*in, *out, c); err != nil {
+				return err
+			}
+		} else {
+			out.Post = nil
+		}
 		return nil
 	}
 }
