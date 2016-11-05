@@ -192,7 +192,7 @@ func TestGetUnknownSchemaObjectListGeneric(t *testing.T) {
 			}),
 		}
 
-		f, tf, codec := cmdtesting.NewMixedFactory(regularClient)
+		f, tf, codec := cmdtesting.NewMixedFactory(regularClient, false)
 		negotiatedSerializer := serializer.NegotiatedSerializerWrapper(runtime.SerializerInfo{Serializer: codec})
 		tf.Printer = &testPrinter{}
 		tf.Client = &fake.RESTClient{
@@ -210,7 +210,7 @@ func TestGetUnknownSchemaObjectListGeneric(t *testing.T) {
 		cmd.Flags().Set("output", "json")
 
 		cmd.Flags().Set("output-version", test.outputVersion)
-		err := RunGet(f, buf, errBuf, cmd, []string{"type/foo", "replicationcontrollers/foo"}, &GetOptions{Typer: api.Scheme})
+		err := RunGet(f, buf, errBuf, cmd, []string{"type/foo", "replicationcontrollers/foo"}, &GetOptions{})
 		if err != nil {
 			t.Errorf("%s: unexpected error: %v", k, err)
 			continue

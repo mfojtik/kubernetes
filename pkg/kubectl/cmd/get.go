@@ -39,8 +39,7 @@ import (
 type GetOptions struct {
 	resource.FilenameOptions
 
-	Typer runtime.ObjectTyper
-	Raw   string
+	Raw string
 }
 
 var (
@@ -150,9 +149,6 @@ func RunGet(f cmdutil.Factory, out, errOut io.Writer, cmd *cobra.Command, args [
 	allNamespaces := cmdutil.GetFlagBool(cmd, "all-namespaces")
 	showKind := cmdutil.GetFlagBool(cmd, "show-kind")
 	mapper, typer := f.Object()
-	if options.Typer != nil {
-		typer = options.Typer
-	}
 	printAll := false
 	filterFuncs := f.DefaultResourceFilterFunc()
 	filterOpts := f.DefaultResourceFilterOptions(cmd, allNamespaces)
