@@ -353,6 +353,8 @@ type fakeMixedFactory struct {
 	cmdutil.Factory
 	tf        *TestFactory
 	apiClient resource.RESTClient
+	// recognizeTestType determines whether the Typer returned from Object() will recognize the test types.
+	recognizeTestType bool
 }
 
 func (f *fakeMixedFactory) Object() (meta.RESTMapper, runtime.ObjectTyper) {
@@ -368,7 +370,13 @@ func (f *fakeMixedFactory) Object() (meta.RESTMapper, runtime.ObjectTyper) {
 			{Group: meta.AnyGroup, Version: "v1", Kind: meta.AnyKind},
 		},
 	}
-	return priorityRESTMapper, runtime.MultiObjectTyper{f.tf.Typer, api.Scheme}
+
+	var typer runtime.ObjectTyper = api.Scheme
+	if f.recognizeTestType {
+		typer = runtime.MultiObjectTyper{f.tf.Typer, api.Scheme}
+	}
+
+	return priorityRESTMapper, typer
 }
 
 func (f *fakeMixedFactory) ClientForMapping(m *meta.RESTMapping) (resource.RESTClient, error) {
@@ -378,12 +386,13 @@ func (f *fakeMixedFactory) ClientForMapping(m *meta.RESTMapping) (resource.RESTC
 	return f.tf.Client, f.tf.Err
 }
 
-func NewMixedFactory(apiClient resource.RESTClient) (cmdutil.Factory, *TestFactory, runtime.Codec) {
+func NewMixedFactory(apiClient resource.RESTClient, recognizeTestType bool) (cmdutil.Factory, *TestFactory, runtime.Codec) {
 	f, t, c, _ := NewTestFactory()
 	return &fakeMixedFactory{
-		Factory:   f,
-		tf:        t,
-		apiClient: apiClient,
+		Factory:           f,
+		tf:                t,
+		apiClient:         apiClient,
+		recognizeTestType: recognizeTestType,
 	}, t, c
 }
 
