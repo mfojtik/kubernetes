@@ -65,12 +65,15 @@ function print_forbidden_imports () {
 }
 
 RC=0
-print_forbidden_imports apimachinery || RC=1
-print_forbidden_imports client-go k8s.io/apimachinery || RC=1
-print_forbidden_imports apiserver k8s.io/apimachinery k8s.io/client-go || RC=1
-print_forbidden_imports kube-aggregator k8s.io/apimachinery k8s.io/client-go k8s.io/apiserver || RC=1
-print_forbidden_imports sample-apiserver k8s.io/apimachinery k8s.io/client-go k8s.io/apiserver || RC=1
-print_forbidden_imports apiextensions-apiserver k8s.io/apimachinery k8s.io/client-go k8s.io/apiserver || RC=1
+print_forbidden_imports apimachinery should_be_leaf || RC=1
+print_forbidden_imports api k8s.io/apimachinery || RC=1
+print_forbidden_imports kube-gen k8s.io/apimachinery k8s.io/client-go k8s.io/gengo || RC=1
+print_forbidden_imports client-go k8s.io/apimachinery k8s.io/api || RC=1
+print_forbidden_imports apiserver k8s.io/apimachinery k8s.io/client-go k8s.io/api || RC=1
+print_forbidden_imports metrics k8s.io/apimachinery k8s.io/client-go k8s.io/api || RC=1
+print_forbidden_imports kube-aggregator k8s.io/apimachinery k8s.io/client-go k8s.io/apiserver k8s.io/api || RC=1
+print_forbidden_imports sample-apiserver k8s.io/apimachinery k8s.io/client-go k8s.io/apiserver k8s.io/api || RC=1
+print_forbidden_imports apiextensions-apiserver k8s.io/apimachinery k8s.io/client-go k8s.io/apiserver k8s.io/api || RC=1
 if [ ${RC} != 0 ]; then
     exit ${RC}
 fi
