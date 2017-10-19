@@ -32,10 +32,15 @@ import (
 	"github.com/golang/glog"
 )
 
+var defaultPluralExceptions map[string]string
+
 // NameSystems returns the name system used by the generators in this package.
 func NameSystems() namer.NameSystems {
 	pluralExceptions := map[string]string{
 		"Endpoints": "Endpoints",
+	}
+	for k, v := range defaultPluralExceptions {
+		pluralExceptions[k] = v
 	}
 	return namer.NameSystems{
 		"public":             namer.NewPublicNamer(0),
@@ -127,6 +132,10 @@ func Packages(context *generator.Context, arguments *args.GeneratorArgs) generat
 		internalVersionPackagePath = filepath.Join(arguments.OutputPackagePath, "internalversion")
 		externalVersionPackagePath = filepath.Join(arguments.OutputPackagePath, "externalversions")
 	}
+	if err := arguments.LoadExternalNamerExceptions(); err != nil {
+		glog.Fatalf("Unable to load external namer rules %s: %v", arguments.NamerExceptionsPath, err)
+	}
+	defaultPluralExceptions = arguments.PluralNamerExceptions
 
 	var packageList generator.Packages
 	typesForGroupVersion := make(map[clientgentypes.GroupVersion][]*types.Type)
@@ -209,7 +218,7 @@ func Packages(context *generator.Context, arguments *args.GeneratorArgs) generat
 
 	if len(externalGroupVersions) != 0 {
 		packageList = append(packageList, factoryInterfacePackage(externalVersionPackagePath, boilerplate, customArgs.VersionedClientSetPackage, typesForGroupVersion))
-		packageList = append(packageList, factoryPackage(externalVersionPackagePath, boilerplate, externalGroupVersions, customArgs.VersionedClientSetPackage, typesForGroupVersion))
+		packageList = append(packageList, factoryPackage(externalVersionPackagePath, boilerplate, externalGroupVersions, customArgs.VersionedClientSetPackage, typesForGroupVersion, defaultPluralExceptions))
 		for _, groupVersionsEntry := range externalGroupVersions {
 			packageList = append(packageList, groupPackage(externalVersionPackagePath, groupVersionsEntry, boilerplate))
 		}
@@ -217,7 +226,7 @@ func Packages(context *generator.Context, arguments *args.GeneratorArgs) generat
 
 	if len(internalGroupVersions) != 0 {
 		packageList = append(packageList, factoryInterfacePackage(internalVersionPackagePath, boilerplate, customArgs.InternalClientSetPackage, typesForGroupVersion))
-		packageList = append(packageList, factoryPackage(internalVersionPackagePath, boilerplate, internalGroupVersions, customArgs.InternalClientSetPackage, typesForGroupVersion))
+		packageList = append(packageList, factoryPackage(internalVersionPackagePath, boilerplate, internalGroupVersions, customArgs.InternalClientSetPackage, typesForGroupVersion, defaultPluralExceptions))
 		for _, groupVersionsEntry := range internalGroupVersions {
 			packageList = append(packageList, groupPackage(internalVersionPackagePath, groupVersionsEntry, boilerplate))
 		}
@@ -230,7 +239,7 @@ func isInternalVersion(gv clientgentypes.GroupVersion) bool {
 	return len(gv.Version) == 0
 }
 
-func factoryPackage(basePackage string, boilerplate []byte, groupVersions map[string]clientgentypes.GroupVersions, clientSetPackage string, typesForGroupVersion map[clientgentypes.GroupVersion][]*types.Type) generator.Package {
+func factoryPackage(basePackage string, boilerplate []byte, groupVersions map[string]clientgentypes.GroupVersions, clientSetPackage string, typesForGroupVersion map[clientgentypes.GroupVersion][]*types.Type, pluralizationExceptions map[string]string) generator.Package {
 	return &generator.DefaultPackage{
 		PackageName: filepath.Base(basePackage),
 		PackagePath: basePackage,
@@ -251,10 +260,11 @@ func factoryPackage(basePackage string, boilerplate []byte, groupVersions map[st
 				DefaultGen: generator.DefaultGen{
 					OptionalName: "generic",
 				},
-				outputPackage:        basePackage,
-				imports:              generator.NewImportTracker(),
-				groupVersions:        groupVersions,
-				typesForGroupVersion: typesForGroupVersion,
+				outputPackage:           basePackage,
+				imports:                 generator.NewImportTracker(),
+				groupVersions:           groupVersions,
+				typesForGroupVersion:    typesForGroupVersion,
+				defaultPluralExceptions: pluralExceptions,
 			})
 
 			return generators

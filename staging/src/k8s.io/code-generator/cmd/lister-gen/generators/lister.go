@@ -33,10 +33,15 @@ import (
 	"github.com/golang/glog"
 )
 
+var defaultPluralExceptions map[string]string
+
 // NameSystems returns the name system used by the generators in this package.
 func NameSystems() namer.NameSystems {
 	pluralExceptions := map[string]string{
 		"Endpoints": "Endpoints",
+	}
+	for k, v := range defaultPluralExceptions {
+		pluralExceptions[k] = v
 	}
 	return namer.NameSystems{
 		"public":             namer.NewPublicNamer(0),
@@ -76,6 +81,10 @@ func Packages(context *generator.Context, arguments *args.GeneratorArgs) generat
 	}
 
 	boilerplate = append(boilerplate, []byte(generatedBy())...)
+	if err := arguments.LoadExternalNamerExceptions(); err != nil {
+		glog.Fatalf("Unable to load external namer rules %s: %v", arguments.NamerExceptionsPath, err)
+	}
+	defaultPluralExceptions = arguments.PluralNamerExceptions
 
 	var packageList generator.Packages
 	for _, inputDir := range arguments.InputDirs {

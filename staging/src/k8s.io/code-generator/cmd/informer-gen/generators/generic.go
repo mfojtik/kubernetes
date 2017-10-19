@@ -30,11 +30,12 @@ import (
 // genericGenerator generates the generic informer.
 type genericGenerator struct {
 	generator.DefaultGen
-	outputPackage        string
-	imports              namer.ImportTracker
-	groupVersions        map[string]clientgentypes.GroupVersions
-	typesForGroupVersion map[clientgentypes.GroupVersion][]*types.Type
-	filtered             bool
+	outputPackage           string
+	imports                 namer.ImportTracker
+	groupVersions           map[string]clientgentypes.GroupVersions
+	typesForGroupVersion    map[clientgentypes.GroupVersion][]*types.Type
+	filtered                bool
+	defaultPluralExceptions map[string]string
 }
 
 var _ generator.Generator = &genericGenerator{}
@@ -50,6 +51,9 @@ func (g *genericGenerator) Filter(c *generator.Context, t *types.Type) bool {
 func (g *genericGenerator) Namers(c *generator.Context) namer.NameSystems {
 	pluralExceptions := map[string]string{
 		"Endpoints": "Endpoints",
+	}
+	for k, v := range g.defaultPluralExceptions {
+		pluralExceptions[k] = v
 	}
 	return namer.NameSystems{
 		"raw":                namer.NewRawNamer(g.outputPackage, g.imports),

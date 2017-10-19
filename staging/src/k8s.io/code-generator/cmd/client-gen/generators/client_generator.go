@@ -36,32 +36,31 @@ import (
 	"github.com/golang/glog"
 )
 
+var (
+	defaultPluralNamerExceptions map[string]string
+	defaultPublicNamerException  map[string]string
+	defaultPrivateNamerException map[string]string
+)
+
 // NameSystems returns the name system used by the generators in this package.
 func NameSystems() namer.NameSystems {
 	pluralExceptions := map[string]string{
 		"Endpoints": "Endpoints",
 	}
+	for k, v := range defaultPluralNamerExceptions {
+		pluralExceptions[k] = v
+	}
 	lowercaseNamer := namer.NewAllLowercasePluralNamer(pluralExceptions)
 
 	publicNamer := &ExceptionNamer{
-		Exceptions: map[string]string{
-		// these exceptions are used to deconflict the generated code
-		// you can put your fully qualified package like
-		// to generate a name that doesn't conflict with your group.
-		// "k8s.io/apis/events/v1alpha1.Event": "EventResource"
-		},
+		Exceptions: defaultPublicNamerException,
 		KeyFunc: func(t *types.Type) string {
 			return t.Name.Package + "." + t.Name.Name
 		},
 		Delegate: namer.NewPublicNamer(0),
 	}
 	privateNamer := &ExceptionNamer{
-		Exceptions: map[string]string{
-		// these exceptions are used to deconflict the generated code
-		// you can put your fully qualified package like
-		// to generate a name that doesn't conflict with your group.
-		// "k8s.io/apis/events/v1alpha1.Event": "eventResource"
-		},
+		Exceptions: defaultPrivateNamerException,
 		KeyFunc: func(t *types.Type) string {
 			return t.Name.Package + "." + t.Name.Name
 		},
@@ -317,6 +316,14 @@ func Packages(context *generator.Context, arguments *args.GeneratorArgs) generat
 		glog.Fatalf("cannot convert arguments.CustomArgs to clientgenargs.Args")
 	}
 	includedTypesOverrides := customArgs.IncludedTypesOverrides
+
+	// Load the exception rules if provided.
+	if err := arguments.LoadExternalNamerExceptions(); err != nil {
+		glog.Fatalf("Failed to load %s: %v", arguments.NamerExceptionsPath, err)
+	}
+	defaultPublicNamerException = arguments.PublicNamerExceptions
+	defaultPrivateNamerException = arguments.PrivateNamerExceptions
+	defaultPluralNamerExceptions = arguments.PluralNamerExceptions
 
 	applyGroupOverrides(context.Universe, &customArgs)
 
